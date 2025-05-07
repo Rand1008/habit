@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Habit Tracker</title>
+  <link rel="stylesheet" href="habitTracker.css" />
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlPger954w7o1a03exCguZsKQIjNU0A1k",
+      authDomain: "habit-tracker-da4a9.firebaseapp.com",
+      projectId: "habit-tracker-da4a9",
+      appId: "1:133558527800:web:65983ab185285d22bac3cd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let habitDataList = [];
+
+    onAuthStateChanged(auth, async (user) => {
+      const usernameElement = document.getElementById("username");
+
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            usernameElement.textContent = userData.username || user.email;
+          } else {
+            usernameElement.textContent = user.email;
+          }
+
+          await loadHabitTable(user);
+
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          usernameElement.textContent = user.email;
+        }
+      } else {
+        alert("You must be logged in to use the Habit Tracker.");
+        window.location.href = "login.html";
+      }
+    });
+
+    async function loadHabitTable(user) {
+      const habitsCollection = collection(db, 'users', user.uid, 'habits');
+      const habitSnapshot = await getDocs(habitsCollection);
+      habitDataList = [];
+
+      habitSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        habitDataList.push({ id: docSnap.id, ...data });
+      });
+
+      renderHabitTable(habitDataList);
+    }
+
+    function renderHabitTable(habits) {
+      const habitTableBody = document.querySelector('#habitTable tbody');
+      habitTableBody.innerHTML = '';
+
+      habits.forEach(habit => {
+        const tr = document.createElement('tr');
+        const time = Math.floor((habit.totalTime || 0) / 1000);
+        const minutes = Math.floor(time / 60) % 60;
+        const hours = Math.floor(time / 3600);
+        const seconds = time % 60;
+        const formattedTime = `${hours}h ${minutes}m ${seconds}s`;
+
+        tr.innerHTML = `
+          <td>${habit.habitName}</td>
+          <td>${formattedTime}</td>
+          <td>${habit.streak || 0}</td>
+          <td>${habit.lastCompleted ? new Date(habit.lastCompleted.toDate()).toLocaleDateString() : '—'}</td>
+        `;
+
+        tr.addEventListener('click', () => {
+          habitId = habit.id;
+          habitStreak = habit.streak || 0;
+          lastCompletedDate = habit.lastCompleted ? habit.lastCompleted.toDate() : null;
+          streakDisplay.textContent = `Streak: ${habitStreak} days`;
+          habitNameInput.value = habit.habitName || '';
+          selectedHabitDisplay.textContent = `Habit: ${habit.habitName}`;
+          totalTime = 0;
+          timerDisplay.textContent = '0:00:00';
+
+          document.querySelectorAll('#habitTable tbody tr').forEach(row => row.classList.remove('selected'));
+          tr.classList.add('selected');
+        });
+
+        habitTableBody.appendChild(tr);
+      });
+    }
+
+    function logout() {
+      signOut(auth).then(() => {
+        window.location.href = "login.html";
+      }).catch((error) => {
+        alert("Error logging out: " + error.message);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoutButton = document.querySelector('.logout-button');
+      if (logoutButton) logoutButton.addEventListener('click', logout);
+
+      const addHabitBtn = document.getElementById('addHabitBtn');
+      const habitNameInput = document.getElementById('habitName');
+      const timerDisplay = document.getElementById('timerDisplay');
+      const streakDisplay = document.getElementById('streakDisplay');
+      const selectedHabitDisplay = document.getElementById('selectedHabit');
+
+      let timerInterval;
+      let startTime;
+      let totalTime = 0;
+      window.habitId = null;
+      window.habitStreak = 0;
+      window.lastCompletedDate = null;
+
+      addHabitBtn.addEventListener('click', async () => {
+        const habitName = habitNameInput.value.trim();
+        if (!habitName) return alert('Please enter a habit name.');
+
+        try {
+          const user = auth.currentUser;
+          const habitRef = await addDoc(collection(db, 'users', user.uid, 'habits'), {
+            habitName,
+            createdAt: new Date(),
+            totalTime: 0,
+            streak: 0,
+            lastCompleted: null
+          });
+
+          habitId = habitRef.id;
+          habitNameInput.value = '';
+          alert('Habit added successfully!');
+          await loadHabitTable(user);
+        } catch (error) {
+          console.error('Error adding habit: ', error);
+          alert('Failed to add habit.');
+        }
+      });
+
+      const startStopBtn = document.getElementById('startStopBtn');
+      startStopBtn.addEventListener('click', () => {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          updateHabitTime();
+          startStopBtn.textContent = "Start Timer";
+        } else {
+          if (!habitId) return alert('Please select a habit first.');
+          startTime = Date.now() - totalTime;
+          timerInterval = setInterval(updateTimerDisplay, 1000);
+          startStopBtn.textContent = "Stop Timer";
+        }
+      });
+
+      function updateTimerDisplay() {
+        totalTime = Date.now() - startTime;
+        const seconds = Math.floor(totalTime / 1000) % 60;
+        const minutes = Math.floor(totalTime / (1000 * 60)) % 60;
+        const hours = Math.floor(totalTime / (1000 * 60 * 60));
+        timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+      }
+
+      function updateHabitTime() {
+        if (!habitId) return;
+        const user = auth.currentUser;
+        const habitRef = doc(db, 'users', user.uid, 'habits', habitId);
+        updateStreak();
+        updateDoc(habitRef, {
+          totalTime: totalTime,
+          streak: habitStreak,
+          lastCompleted: new Date(),
+        }).then(() => {
+          alert('Time and streak saved!');
+          loadHabitTable(user); // refresh
+        }).catch((error) => {
+          console.error('Error updating habit:', error);
+          alert('Failed to update habit.');
+        });
+      }
+
+      function updateStreak() {
+        const currentDate = new Date();
+        const lastDate = lastCompletedDate ? new Date(lastCompletedDate) : null;
+
+        if (!lastDate) habitStreak = 1;
+        else {
+          const diff = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+          habitStreak = diff === 1 ? habitStreak + 1 : 1;
+        }
+
+        streakDisplay.textContent = `Streak: ${habitStreak} days`;
+        lastCompletedDate = currentDate;
+      }
+
+      // Filter Logic
+      const filterInput = document.getElementById("filterInput");
+      filterInput.addEventListener("input", () => {
+        const filter = filterInput.value.toLowerCase();
+        const filtered = habitDataList.filter(habit =>
+          habit.habitName.toLowerCase().includes(filter)
+        );
+        renderHabitTable(filtered);
+      });
+    });
+  </script>
+</head>
+<body>
+  <div class="Container">
+    <h1>Habit Tracker</h1>
+    <p>Welcome, <span id="username">Loading...</span></p>
+    <button class="logout-button">Logout</button>
+    <br><br>
+
+    <div class="habit-input">
+      <input type="text" id="habitName" placeholder="Enter habit name" />
+      <button id="addHabitBtn">Add Habit</button>
+    </div>
+
+    <br>
+    <button id="toggleHabitListBtn">Your Habits</button>
+
+    <div id="habitPopup" class="habit-popup">
+      <div class="habit-popup-content">
+        <button id="closePopupBtn" class="habit-popup-close-btn">Close</button>
+        <h3>Your Habits</h3>
+        <input type="text" id="filterInput" placeholder="Filter habits..." />
+        <table id="habitTable">
+          <thead>
+            <tr>
+              <th>Habit</th>
+              <th>Time</th>
+              <th>Streak</th>
+              <th>Last Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows added dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <br>
+    <p id="selectedHabit">Habit: None</p>
+    <div class="timer-section">
+      <p>Timer: <span id="timerDisplay">0:00:00</span></p>
+      <div class="streak-section">
+      <p id="streakDisplay">Streak: 0 days</p>
+    </div><button id="startStopBtn">Start Timer</button>
+    </div>
+
+    
+  </div>
+
+  <script>
+    document.getElementById("toggleHabitListBtn").addEventListener("click", () => {
+      document.getElementById("habitPopup").classList.add("show");
+    });
+
+    document.getElementById("closePopupBtn").addEventListener("click", () => {
+      document.getElementById("habitPopup").classList.remove("show");
+    });
+  </script>
+</body>
+</html>
