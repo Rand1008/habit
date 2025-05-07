@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Habit Tracker</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Habit Tracker</h1>
+    <p>To start using the habit tracker, please <a href="login.html">Login</a> or <a href="register.html">Register</a>.</p>
+  </div>
+
+  <script>
+    // Check if the user is logged in
+    const loggedIn = localStorage.getItem('user');
+    if (loggedIn) {
+      window.location.href = "habitTracker.html"; // Redirect to habit tracker if logged in
+    }
+  </script>
+</body>
+</html>
