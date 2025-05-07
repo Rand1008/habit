@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link rel="stylesheet" href="login.css" />
+  <!-- Use Firebase as module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlPger954w7o1a03exCguZsKQIjNU0A1k",
+      authDomain: "habit-tracker-da4a9.firebaseapp.com",
+      projectId: "habit-tracker-da4a9",
+      appId: "1:133558527800:web:65983ab185285d22bac3cd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          localStorage.setItem('user', JSON.stringify({ uid: user.uid, email: user.email }));
+          window.location.href = "habitTracker.html";
+        })
+        .catch((error) => {
+          alert("Login failed: " + error.message);
+          console.error(error);
+        });
+    });
+
+    document.getElementById("showPassword").addEventListener("change", (e) => {
+      const passwordInput = document.getElementById("password");
+      passwordInput.type = e.target.checked ? "text" : "password";
+    });
+  </script>
+</head>
+<body>
+  <div class="auth-container">
+    <h1>Login</h1>
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="email" placeholder="Email" required /><br /><br />
+      <input type="password" id="password" placeholder="Password" required />
+      <br />
+      <label>
+        <input type="checkbox" id="togglePassword"> Show Password
+      </label>
+      
+      <br /><br />
+      <button type="submit" class="auth-button">Login</button>
+    </form>
+    <p>Don't have an account? <a href="register.html">Register</a></p>
+  </div>
+  <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+  
+    togglePassword.addEventListener('change', () => {
+      passwordInput.type = togglePassword.checked ? 'text' : 'password';
+    });
+  </script>
+  
+</body>
+</html>
