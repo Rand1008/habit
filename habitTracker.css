@@ -269,3 +269,7 @@ p {
   background-color: #dff0d8;
   font-weight: bold;
 }
+#habitTable tbody tr.selected {
+  background-color: #d3e4ff;
+  font-weight: bold;
+}
