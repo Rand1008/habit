@@ -23,6 +23,24 @@
 
     let habitDataList = [];
 
+    // Declare variables in the top-level scope
+    let habitId = null;
+    let habitStreak = 0;
+    let lastCompletedDate = null;
+    let timerInterval;
+    let startTime;
+    let totalTime = 0;
+
+    // DOM elements
+    const logoutButton = document.querySelector('.logout-button');
+    const addHabitBtn = document.getElementById('addHabitBtn');
+    const habitNameInput = document.getElementById('habitName');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const streakDisplay = document.getElementById('streakDisplay');
+    const selectedHabitDisplay = document.getElementById('selectedHabit');
+    const startStopBtn = document.getElementById('startStopBtn');
+    const filterInput = document.getElementById("filterInput");
+
     onAuthStateChanged(auth, async (user) => {
       const usernameElement = document.getElementById("username");
 
@@ -107,21 +125,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const logoutButton = document.querySelector('.logout-button');
       if (logoutButton) logoutButton.addEventListener('click', logout);
-
-      const addHabitBtn = document.getElementById('addHabitBtn');
-      const habitNameInput = document.getElementById('habitName');
-      const timerDisplay = document.getElementById('timerDisplay');
-      const streakDisplay = document.getElementById('streakDisplay');
-      const selectedHabitDisplay = document.getElementById('selectedHabit');
-
-      let timerInterval;
-      let startTime;
-      let totalTime = 0;
-      window.habitId = null;
-      window.habitStreak = 0;
-      window.lastCompletedDate = null;
 
       addHabitBtn.addEventListener('click', async () => {
         const habitName = habitNameInput.value.trim();
@@ -147,7 +151,6 @@
         }
       });
 
-      const startStopBtn = document.getElementById('startStopBtn');
       startStopBtn.addEventListener('click', () => {
         if (timerInterval) {
           clearInterval(timerInterval);
@@ -203,7 +206,6 @@
       }
 
       // Filter Logic
-      const filterInput = document.getElementById("filterInput");
       filterInput.addEventListener("input", () => {
         const filter = filterInput.value.toLowerCase();
         const filtered = habitDataList.filter(habit =>
@@ -254,12 +256,13 @@
     <p id="selectedHabit">Habit: None</p>
     <div class="timer-section">
       <p>Timer: <span id="timerDisplay">0:00:00</span></p>
-      <div class="streak-section">
-      <p id="streakDisplay">Streak: 0 days</p>
-    </div><button id="startStopBtn">Start Timer</button>
+      <button id="startStopBtn">Start Timer</button>
     </div>
 
-    
+    <br>
+    <div class="streak-section">
+      <p id="streakDisplay">Streak: 0 days</p>
+    </div>
   </div>
 
   <script>
