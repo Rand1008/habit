@@ -262,3 +262,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+function updateTimerDisplay() {
+  totalTime = Date.now() - startTime;
+  const seconds = Math.floor(totalTime / 1000) % 60;
+  const minutes = Math.floor(totalTime / (1000 * 60)) % 60;
+  const hours = Math.floor(totalTime / (1000 * 60 * 60));
+  timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+
+  // Update progress bar toward a goal (e.g. 3600 seconds = 1 hour)
+  const goalSeconds = 3600; // 1 hour
+  const progress = Math.min(totalTime / 1000, goalSeconds);
+  document.getElementById('habitProgress').value = progress;
+
+  const percent = Math.min((progress / goalSeconds) * 100, 100).toFixed(0);
+  document.getElementById('progressText').textContent = `${percent}%`;
+}
