@@ -49,12 +49,13 @@
     <h1>Login</h1>
     <form id="loginForm" class="auth-form">
       <input type="email" id="email" placeholder="Email" required /><br /><br />
-      <input type="password" id="password" placeholder="Password" required />
-      <br />
-      <label>
-        <input type="checkbox" id="togglePassword"> Show Password
-      </label>
-      
+      <div class="password-container">
+        <input type="password" id="password" placeholder="Password" required />
+        <label class="show-password">
+          <input type="checkbox" id="togglePassword" />
+          Show
+        </label>
+      </div>
       <br /><br />
       <button type="submit" class="auth-button">Login</button>
     </form>
