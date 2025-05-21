@@ -50,10 +50,24 @@
     <form id="registerForm" class="auth-form">
       <input type="text" id="username" placeholder="Username" required /><br /><br /> <!-- Username Input -->
       <input type="email" id="email" placeholder="Email" required /><br /><br />
-      <input type="password" id="password" placeholder="Password" required /><br /><br />
+      <div class="password-container">
+        <input type="password" id="password" placeholder="Password" required />
+        <label class="show-password">
+          <input type="checkbox" id="togglePassword" />
+          Show
+        </label>
+      </div><br /><br />
       <button type="submit" class="auth-button">Register</button>
     </form>
     <p>Already have an account? <a href="login.html">Login</a></p>
   </div>
+  <script>
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+  
+    togglePassword.addEventListener('change', () => {
+      passwordInput.type = togglePassword.checked ? 'text' : 'password';
+    });
+  </script>
 </body>
 </html>
